@@ -141,7 +141,7 @@ export default function GameMenu() {
               Team with AI
             </h2>
             <p style={{ fontSize: 14, margin: 0, color: "#666" }}>
-              Run with AI teammates
+              Defeat the fryer with AI teammates
             </p>
           </div>
         </div>
