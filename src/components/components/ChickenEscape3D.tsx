@@ -33,8 +33,8 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
   const { jump, playJumpSound, playHitSound } = useGameLogic(mode);
 
   // FBX
-  const fbx = useFBX("/minecraft-chicken/chicken.fbx");
-  const texture = useTexture("/minecraft-chicken/textures/chicken.png");
+  const fbx = useFBX("/chiken/source/петух.fbx");
+  const texture = useTexture("/chiken/textures/утка.png");
 
   // Player & lanes
   const [lane, setLane] = useState<number>(1); // 0 left, 1 center, 2 right
@@ -50,17 +50,13 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   // Boss mode
   const [bossHealth, setBossHealth] = useState(4000);
-  const [projectiles, setProjectiles] = useState;
-  {
+  const [projectiles, setProjectiles] = useState<Array<{
     position: [number, number, number];
     headshot: boolean;
-  }
-  [] > [];
-  const [aiProjectiles, setAiProjectiles] = useState;
-  {
+  }>>([]);
+  const [aiProjectiles, setAiProjectiles] = useState<Array<{
     position: [number, number, number];
-  }
-  [] > [];
+  }>>([]);
 
   // Generate obstacles for solo mode
   useEffect(() => {
