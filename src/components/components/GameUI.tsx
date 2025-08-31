@@ -16,10 +16,10 @@ export default function GameUI({ gameState }: { gameState: GameState }) {
         {gameState.phase === "ready"
           ? "Click to Start"
           : gameState.phase === "playing"
-          ? "Playing"
-          : gameState.phase === "gameOver"
-          ? "Game Over"
-          : "You Win!"}
+            ? "Playing"
+            : gameState.phase === "gameOver"
+              ? "Game Over"
+              : "You Win!"}
       </p>
     </div>
   );
