@@ -57,7 +57,7 @@ export default function ChickenEscape2D() {
       ctx.fillStyle = "#FFD700";
       ctx.fillRect(x, y, 40, 40);
     },
-    []
+    [],
   );
 
   const drawFryer = useCallback(
@@ -66,7 +66,7 @@ export default function ChickenEscape2D() {
       ctx.fillStyle = "#8B0000";
       ctx.fillRect(x, y, 40, 40);
     },
-    []
+    [],
   );
 
   const drawUI = useCallback(
@@ -82,7 +82,7 @@ export default function ChickenEscape2D() {
       ctx.strokeText(timeText, 650, 40);
       ctx.fillText(timeText, 650, 40);
     },
-    []
+    [],
   );
 
   // --- Game update ---
