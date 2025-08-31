@@ -45,18 +45,22 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   // Solo obstacles
   const [obstacles, setObstacles] = useState<Array<[number, number, number]>>(
-    []
+    [],
   );
 
   // Boss mode
   const [bossHealth, setBossHealth] = useState(4000);
-  const [projectiles, setProjectiles] = useState<Array<{
-    position: [number, number, number];
-    headshot: boolean;
-  }>>([]);
-  const [aiProjectiles, setAiProjectiles] = useState<Array<{
-    position: [number, number, number];
-  }>>([]);
+  const [projectiles, setProjectiles] = useState<
+    Array<{
+      position: [number, number, number];
+      headshot: boolean;
+    }>
+  >([]);
+  const [aiProjectiles, setAiProjectiles] = useState<
+    Array<{
+      position: [number, number, number];
+    }>
+  >([]);
 
   // Generate obstacles for solo mode
   useEffect(() => {
@@ -89,7 +93,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
               position: [playerPos[0], playerPos[1] + 1, playerPos[2]] as [
                 number,
                 number,
-                number
+                number,
               ],
               headshot: Math.random() < 0.2,
             },
@@ -107,8 +111,8 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
     if (mode === "solo") {
       setObstacles((obs) =>
         obs.map(
-          ([x, y, z]) => [x, y, z + delta * 5] as [number, number, number]
-        )
+          ([x, y, z]) => [x, y, z + delta * 5] as [number, number, number],
+        ),
       );
       // Check collisions
       obstacles.forEach(([x, y, z]) => {
@@ -128,7 +132,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
             ] as [number, number, number],
             headshot: proj.headshot,
           }))
-          .filter((proj) => proj.position[2] > -50)
+          .filter((proj) => proj.position[2] > -50),
       );
       setAiProjectiles((p) =>
         p
@@ -139,7 +143,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
               proj.position[2] + 0.3,
             ] as [number, number, number],
           }))
-          .filter((proj) => proj.position[2] < 10)
+          .filter((proj) => proj.position[2] < 10),
       );
 
       // Check projectile hits on boss
