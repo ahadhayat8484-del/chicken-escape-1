@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, useFBX, useTexture } from "@react-three/drei";
 import { Group } from "three";
-import useGameLogic from "../../hooks/useGameLogic";
+import { useGameLogic } from "../../hooks/useGameLogic";
 
 function Ground() {
   return (
@@ -20,11 +20,100 @@ function Fryer({
   position: [number, number, number];
   isChasing?: boolean;
 }) {
+  // Use fryer.fbx model
+  const fryerFbx: any = useFBX("/fryer.fbx");
+  
+  useEffect(() => {
+    if (!fryerFbx) return;
+    fryerFbx.traverse((child: any) => {
+      if (child.isMesh) {
+        child.material = child.material.clone();
+        child.material.color.set(isChasing ? "#aa4444" : "#8B4513");
+        child.material.needsUpdate = true;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [fryerFbx, isChasing]);
+
+  if (!fryerFbx) {
+    // Fallback fryer shape
+    return (
+      <mesh position={position} castShadow>
+        <boxGeometry args={[2, 2, 2]} />
+        <meshStandardMaterial color={isChasing ? "#aa4444" : "#8B4513"} />
+      </mesh>
+    );
+  }
+
   return (
-    <mesh position={position} castShadow>
-      <boxGeometry args={[2, 2, 2]} />
-      <meshStandardMaterial color={isChasing ? "#aa4444" : "#555555"} />
-    </mesh>
+    <group position={position}>
+      <primitive object={fryerFbx} scale={[0.05, 0.05, 0.05]} />
+    </group>
+  );
+}
+
+function FireObstacle({ position }: { position: [number, number, number] }) {
+  const fireFbx: any = useFBX("/fire.fbx");
+  
+  useEffect(() => {
+    if (!fireFbx) return;
+    fireFbx.traverse((child: any) => {
+      if (child.isMesh) {
+        child.material = child.material.clone();
+        child.material.color.set("#FF4500");
+        child.material.needsUpdate = true;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [fireFbx]);
+
+  if (!fireFbx) {
+    return (
+      <mesh position={position} castShadow>
+        <cylinderGeometry args={[0.5, 0.8, 1.5, 8]} />
+        <meshStandardMaterial color="#FF4500" />
+      </mesh>
+    );
+  }
+
+  return (
+    <group position={position}>
+      <primitive object={fireFbx} scale={[0.03, 0.03, 0.03]} />
+    </group>
+  );
+}
+
+function OilObstacle({ position }: { position: [number, number, number] }) {
+  const oilFbx: any = useFBX("/oil.fbx");
+  
+  useEffect(() => {
+    if (!oilFbx) return;
+    oilFbx.traverse((child: any) => {
+      if (child.isMesh) {
+        child.material = child.material.clone();
+        child.material.color.set("#8B4513");
+        child.material.needsUpdate = true;
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [oilFbx]);
+
+  if (!oilFbx) {
+    return (
+      <mesh position={position} castShadow>
+        <cylinderGeometry args={[0.6, 0.6, 0.3, 16]} />
+        <meshStandardMaterial color="#8B4513" />
+      </mesh>
+    );
+  }
+
+  return (
+    <group position={position}>
+      <primitive object={oilFbx} scale={[0.03, 0.03, 0.03]} />
+    </group>
   );
 }
 
@@ -35,11 +124,16 @@ function Gun({
   position: [number, number, number];
   rotation?: [number, number, number];
 }) {
-  // hooks at top level
   const gunModel: any = useFBX("/glock-17-gen-5/Glock-17gen5.fbx");
-  const diffuse: any = useTexture("/glock-17-gen-5/textures/Glock_SP_Set_001_Diffuse.jpeg");
-  const normal: any = useTexture("/glock-17-gen-5/textures/Glock_SP_Set_001_Normal.jpeg");
-  const roughness: any = useTexture("/glock-17-gen-5/textures/Glock_SP_Set_001_Glossiness.jpeg");
+  const diffuse: any = useTexture(
+    "/glock-17-gen-5/textures/Glock_SP_Set_001_Diffuse.jpeg"
+  );
+  const normal: any = useTexture(
+    "/glock-17-gen-5/textures/Glock_SP_Set_001_Normal.jpeg"
+  );
+  const roughness: any = useTexture(
+    "/glock-17-gen-5/textures/Glock_SP_Set_001_Glossiness.jpeg"
+  );
 
   useEffect(() => {
     if (!gunModel) return;
@@ -67,7 +161,6 @@ function Gun({
     );
   }
 
-  // fallback
   return (
     <group position={position} rotation={rotation}>
       <mesh>
@@ -79,19 +172,18 @@ function Gun({
 }
 
 function AIChicken({ position }: { position: [number, number, number] }) {
-  // hooks at top level
   const fbx: any = useFBX("/minecraft-chicken/source/Chicken.fbx");
   const texture: any = useTexture("/minecraft-chicken/textures/chicken.png");
 
   useEffect(() => {
     if (!fbx || !texture) return;
-    fbx.traverse((c: any) => {
-      if (c.isMesh) {
-        c.material = c.material.clone();
-        c.material.map = texture;
-        c.material.needsUpdate = true;
-        c.castShadow = true;
-        c.receiveShadow = true;
+    fbx.traverse((child: any) => {
+      if (child.isMesh) {
+        child.material = child.material.clone();
+        child.material.map = texture;
+        child.material.needsUpdate = true;
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
   }, [fbx, texture]);
@@ -156,6 +248,12 @@ interface Projectile {
   id: number;
 }
 
+interface Obstacle {
+  position: [number, number, number];
+  type: 'fire' | 'oil';
+  id: number;
+}
+
 interface ChickenEscape3DProps {
   gameMode?: string;
 }
@@ -166,7 +264,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   const { jump, playJumpSound, playHitSound } = useGameLogic(mode);
 
-  // player model hooks at top level
+  // Player chicken model - positioned at the bottom
   const playerFbx: any = useFBX("/minecraft-chicken/source/Chicken.fbx");
   const playerTexture: any = useTexture("/minecraft-chicken/textures/chicken.png");
 
@@ -185,16 +283,26 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   const lanes = [-2, 0, 2];
   const [lane, setLane] = useState<number>(1);
-  const [playerPos, setPlayerPos] = useState<[number, number, number]>([lanes[1], 0, 0]);
+  // Position chicken at the bottom (negative Z)
+  const [playerPos, setPlayerPos] = useState<[number, number, number]>([
+    lanes[1],
+    0,
+    -15,
+  ]);
   const [isJumping, setIsJumping] = useState(false);
   const [jumpStartTime, setJumpStartTime] = useState<number | null>(null);
 
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
 
-  const [obstacles, setObstacles] = useState<Array<[number, number, number]>>([]);
-  const [chasingFryer, setChasingFryer] = useState<[number, number, number]>([0, 1, 5]);
+  // Changed obstacles to include type and id
+  const [obstacles, setObstacles] = useState<Obstacle[]>([]);
+  // Fryer starts behind the chicken
+  const [chasingFryer, setChasingFryer] = useState<[number, number, number]>([
+    0, 1, -20,
+  ]);
   const [gameSpeed, setGameSpeed] = useState(5);
+  const [obstacleIdCounter, setObstacleIdCounter] = useState(1);
 
   const [bossHealth, setBossHealth] = useState(5000);
   const [projectiles, setProjectiles] = useState<Projectile[]>([]);
@@ -202,23 +310,30 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
   const [lastAiShot, setLastAiShot] = useState(0);
   const [projectileIdCounter, setProjectileIdCounter] = useState(1);
 
+  // Generate obstacles coming from the front (positive Z)
   useEffect(() => {
     if (mode !== "solo") return;
-    const generated: Array<[number, number, number]> = [];
+    const generated: Obstacle[] = [];
     for (let i = 1; i <= 12; i++) {
       const laneIndex = Math.floor(Math.random() * 3);
-      const z = 5 + i * 6 + Math.random() * 4;
-      generated.push([lanes[laneIndex], 0, z]);
+      const z = 10 + i * 6 + Math.random() * 4; // Positive Z (in front)
+      const type = Math.random() < 0.5 ? 'fire' : 'oil';
+      generated.push({
+        position: [lanes[laneIndex], 0, z],
+        type,
+        id: obstacleIdCounter + i
+      });
     }
     setObstacles(generated);
-    setChasingFryer([0, 1, 5]);
+    setChasingFryer([0, 1, -20]); // Behind the chicken
+    setObstacleIdCounter(prev => prev + 12);
   }, [mode]);
 
   const resetGame = useCallback(() => {
     setGameOver(false);
     setGameWon(false);
     setLane(1);
-    setPlayerPos([lanes[1], 0, 0]);
+    setPlayerPos([lanes[1], 0, -15]); // Reset to bottom position
     setIsJumping(false);
     setJumpStartTime(null);
     setProjectiles([]);
@@ -226,17 +341,23 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
     setProjectileIdCounter(1);
     setBossHealth(5000);
     if (mode === "solo") {
-      const generated: Array<[number, number, number]> = [];
+      const generated: Obstacle[] = [];
       for (let i = 1; i <= 12; i++) {
         const laneIndex = Math.floor(Math.random() * 3);
-        const z = 5 + i * 6 + Math.random() * 4;
-        generated.push([lanes[laneIndex], 0, z]);
+        const z = 10 + i * 6 + Math.random() * 4;
+        const type = Math.random() < 0.5 ? 'fire' : 'oil';
+        generated.push({
+          position: [lanes[laneIndex], 0, z],
+          type,
+          id: obstacleIdCounter + i
+        });
       }
       setObstacles(generated);
-      setChasingFryer([0, 1, 5]);
+      setChasingFryer([0, 1, -20]);
       setGameSpeed(5);
+      setObstacleIdCounter(prev => prev + 12);
     }
-  }, [mode]);
+  }, [mode, obstacleIdCounter]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -260,7 +381,11 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
           setProjectileIdCounter(id + 1);
           return [
             ...prev,
-            { position: [lanes[lane], 0.6, 0.5], fromPlayer: true, id },
+            {
+              position: [lanes[lane], 0.6, playerPos[2] + 0.5] as [number, number, number],
+              fromPlayer: true,
+              id,
+            },
           ];
         });
       }
@@ -275,7 +400,26 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
     playJumpSound,
     projectileIdCounter,
     resetGame,
+    playerPos,
   ]);
+
+  // Add click/touch handler for jumping
+  useEffect(() => {
+    const handleClick = () => {
+      if (gameOver) return;
+      if (!isJumping) {
+        setIsJumping(true);
+        setJumpStartTime(Date.now());
+        playJumpSound && playJumpSound();
+      }
+    };
+    window.addEventListener("click", handleClick);
+    window.addEventListener("touchstart", handleClick);
+    return () => {
+      window.removeEventListener("click", handleClick);
+      window.removeEventListener("touchstart", handleClick);
+    };
+  }, [isJumping, gameOver, playJumpSound]);
 
   useFrame((_, delta) => {
     if (gameOver || gameWon) return;
@@ -291,7 +435,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
       const jumpDuration = 0.6;
       const height = Math.max(
         0,
-        2 * (4 * (elapsed / jumpDuration) * (1 - elapsed / jumpDuration))
+        2.5 * (4 * (elapsed / jumpDuration) * (1 - elapsed / jumpDuration))
       );
       setPlayerPos((p) => [p[0], height, p[2]]);
       if (elapsed > jumpDuration) {
@@ -302,45 +446,73 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
     }
 
     if (mode === "solo") {
+      // Move obstacles towards the chicken (negative Z direction)
       setObstacles((prev) =>
         prev
-          .map((ob) => [ob[0], ob[1], ob[2] - gameSpeed * delta] as [
-            number,
-            number,
-            number
-          ])
-          .filter((ob) => ob[2] > -10)
+          .map((ob) => ({
+            ...ob,
+            position: [ob.position[0], ob.position[1], ob.position[2] - gameSpeed * delta] as [number, number, number]
+          }))
+          .filter((ob) => ob.position[2] > playerPos[2] - 5) // Remove obstacles that passed the chicken
       );
 
+      // Move fryer towards the chicken from behind
       setChasingFryer((prev) => {
-        const z = prev[2] - (gameSpeed + 1) * delta;
-        return [prev[0], prev[1], z];
+        const z = prev[2] + (gameSpeed * 0.8) * delta; // Slightly slower than obstacles
+        return [prev[0], prev[1], Math.min(z, playerPos[2] - 2)]; // Don't let fryer get too close instantly
       });
 
+      // Check collision with obstacles
       const playerY = playerPos[1];
       const px = playerPos[0];
+      const pz = playerPos[2];
       const collided = obstacles.some((ob) => {
-        const dz = Math.abs(ob[2] - 0);
-        const dx = Math.abs(ob[0] - px);
-        return dz < 0.9 && dx < 0.9 && playerY < 0.8;
+        const dz = Math.abs(ob.position[2] - pz);
+        const dx = Math.abs(ob.position[0] - px);
+        return dz < 1.2 && dx < 0.9 && playerY < 1.0;
       });
       if (collided) {
         setGameOver(true);
         playHitSound && playHitSound();
       }
 
-      if (chasingFryer[2] < 0.9) {
+      // Check if fryer caught the chicken
+      if (chasingFryer[2] > playerPos[2] - 1.5) {
         setGameOver(true);
+        playHitSound && playHitSound();
       }
 
-      setGameSpeed((s) => Math.min(20, s + delta * 0.02));
+      // Gradually increase game speed
+      setGameSpeed((s) => Math.min(20, s + delta * 0.5));
+
+      // Spawn new obstacles as old ones are removed
+      if (obstacles.length < 8) {
+        const maxZ = Math.max(...obstacles.map(o => o.position[2]), 10);
+        const newObstacles: Obstacle[] = [];
+        for (let i = 0; i < 3; i++) {
+          const laneIndex = Math.floor(Math.random() * 3);
+          const z = maxZ + 8 + i * 6 + Math.random() * 4;
+          const type = Math.random() < 0.5 ? 'fire' : 'oil';
+          newObstacles.push({
+            position: [lanes[laneIndex], 0, z],
+            type,
+            id: obstacleIdCounter + i
+          });
+        }
+        setObstacles(prev => [...prev, ...newObstacles]);
+        setObstacleIdCounter(prev => prev + 3);
+      }
     }
 
     if (mode === "team") {
       setProjectiles((prev) =>
         prev
           .map((p) => ({
-            position: [p.position[0], p.position[1], p.position[2] + 20 * delta],
+            position: [
+              p.position[0],
+              p.position[1],
+              (p.position[2] as number) + 20 * delta,
+            ] as [number, number, number],
             fromPlayer: p.fromPlayer,
             id: p.id,
           }))
@@ -350,7 +522,11 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
       setAiProjectiles((prev) =>
         prev
           .map((p) => ({
-            position: [p.position[0], p.position[1], p.position[2] - 15 * delta],
+            position: [
+              p.position[0],
+              p.position[1],
+              (p.position[2] as number) - 15 * delta,
+            ] as [number, number, number],
             id: p.id,
           }))
           .filter((p) => p.position[2] > -20)
@@ -361,13 +537,20 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
         setAiProjectiles((prev) => {
           const id = projectileIdCounter;
           setProjectileIdCounter(id + 1);
-          return [...prev, { position: [0, 0.6, 30], fromPlayer: false, id }];
+          return [
+            ...prev,
+            {
+              position: [0, 0.6, 30] as [number, number, number],
+              fromPlayer: false,
+              id,
+            },
+          ];
         });
       }
 
       aiProjectiles.forEach((p) => {
         const dx = Math.abs(p.position[0] - playerPos[0]);
-        const dz = Math.abs(p.position[2] - 0);
+        const dz = Math.abs(p.position[2] - playerPos[2]);
         if (dx < 0.6 && dz < 0.8) {
           setGameOver(true);
           playHitSound && playHitSound();
@@ -389,7 +572,13 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
   });
 
   const renderObstacles = () =>
-    obstacles.map((ob, i) => <Fryer key={`ob-${i}`} position={ob} />);
+    obstacles.map((ob) => {
+      if (ob.type === 'fire') {
+        return <FireObstacle key={`fire-${ob.id}`} position={ob.position} />;
+      } else {
+        return <OilObstacle key={`oil-${ob.id}`} position={ob.position} />;
+      }
+    });
 
   const renderProjectiles = () =>
     projectiles.map((p) => (
@@ -416,6 +605,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
       <group ref={groupRef}>
         <Ground />
 
+        {/* Player chicken positioned at the bottom */}
         <group position={[playerPos[0], playerPos[1], playerPos[2]]}>
           {playerFbx ? (
             <primitive object={playerFbx} scale={[0.02, 0.02, 0.02]} />
@@ -446,21 +636,75 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
       <Html>
         {mode === "team" && !gameOver && !gameWon && <Crosshair />}
 
-        <div style={{ position: "absolute", top: 20, left: 20, color: "white", fontSize: 16 }}>
+        {/* UI positioned at the top of the screen */}
+        <div style={{ 
+          position: "absolute", 
+          top: 20, 
+          left: "50%", 
+          transform: "translateX(-50%)",
+          color: "white", 
+          fontSize: 24,
+          fontWeight: "bold",
+          textAlign: "center",
+          textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
+        }}>
           {mode === "solo" ? `Speed: ${gameSpeed.toFixed(1)}` : `Boss Health: ${bossHealth}`}
         </div>
 
+        {/* Game Over message at the top */}
         {gameOver && (
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: "red" }}>
-            Game Over - press R
+          <div style={{ 
+            position: "absolute", 
+            top: 80, 
+            left: "50%", 
+            transform: "translateX(-50%)", 
+            color: "#ff4444",
+            fontSize: 36,
+            fontWeight: "bold",
+            textAlign: "center",
+            background: "rgba(0,0,0,0.8)",
+            padding: "20px",
+            borderRadius: "10px",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
+          }}>
+            Game Over<br/>
+            <div style={{fontSize: 18, marginTop: 10}}>Press R to restart</div>
           </div>
         )}
 
         {gameWon && (
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: "lime" }}>
+          <div style={{ 
+            position: "absolute", 
+            top: 80, 
+            left: "50%", 
+            transform: "translateX(-50%)", 
+            color: "lime",
+            fontSize: 36,
+            fontWeight: "bold",
+            textAlign: "center",
+            background: "rgba(0,0,0,0.8)",
+            padding: "20px",
+            borderRadius: "10px",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
+          }}>
             You Win!
           </div>
         )}
+
+        {/* Instructions at the bottom */}
+        <div style={{
+          position: "absolute",
+          bottom: 20,
+          left: "50%",
+          transform: "translateX(-50%)",
+          color: "white",
+          fontSize: 16,
+          textAlign: "center",
+          textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
+        }}>
+          Use SPACE, CLICK, or ARROW KEYS to jump and dodge obstacles!<br/>
+          Don't let the fryer catch you!
+        </div>
       </Html>
 
       <OrbitControls />

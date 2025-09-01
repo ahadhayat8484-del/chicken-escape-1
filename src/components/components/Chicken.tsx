@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useFBX, useTexture } from "@react-three/drei";
 import * as THREE from "three";
+import { MeshStandardMaterial, Texture } from "three";
 
 interface ChickenProps {
   position: [number, number, number];
@@ -19,7 +20,7 @@ export default function Chicken({
 
   // FBX and texture
   let fbx: THREE.Group | null = null;
-  let texture: THREE.Texture | null = null;
+  let texture: Texture | null = null;
 
   try {
     fbx = useFBX("/minecraft-chicken/source/chicken.fbx") as THREE.Group;
@@ -95,7 +96,7 @@ export default function Chicken({
               if (mat instanceof THREE.MeshStandardMaterial)
                 mat.color.set(color);
             });
-          } else if (child.material instanceof THREE.MeshStandardMaterial) {
+          } else if (child.material instanceof MeshStandardMaterial) {
             child.material.color.set(color);
           }
         }

@@ -12,6 +12,7 @@ interface ChickenState {
   y: number;
   dy: number;
   isGrounded: boolean;
+  isDucking: boolean;
 }
 
 interface FryerState {
@@ -20,14 +21,104 @@ interface FryerState {
   speed: number;
 }
 
-// --- Sounds ---
-const jumpSound = new Audio("/sounds/jump.mp3"); // add your sound file
-const hitSound = new Audio("/sounds/hit.mp3"); // add your sound file
+interface Smoke {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
+// --- Sounds ---
+const jumpSound = new Audio("/sounds/jump.mp3");
+const hitSound = new Audio("/sounds/hit.mp3");
+
+// --- Drawing Functions ---
+function drawBackground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+  const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  sky.addColorStop(0, "#87CEEB");
+  sky.addColorStop(1, "#B0E0E6");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#228B22";
+  ctx.fillRect(0, 340, canvas.width, 60);
+  for (let i = 0; i < canvas.width; i += 10) {
+    ctx.beginPath();
+    ctx.moveTo(i, 340);
+    ctx.lineTo(i + 5, 330);
+    ctx.lineTo(i + 10, 340);
+    ctx.fill();
+  }
+}
+
+function drawChicken(ctx: CanvasRenderingContext2D, c: ChickenState) {
+  const height = c.isDucking ? 20 : 40;
+  ctx.fillStyle = "#FFD700";
+  ctx.beginPath();
+  ctx.ellipse(c.x + 20, c.y + height / 2, 20, height / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(c.x + 30, c.y + 10, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "orange";
+  ctx.beginPath();
+  ctx.moveTo(c.x + 35, c.y + 10);
+  ctx.lineTo(c.x + 45, c.y + 15);
+  ctx.lineTo(c.x + 35, c.y + 20);
+  ctx.fill();
+}
+
+function drawFryer(ctx: CanvasRenderingContext2D, f: FryerState) {
+  const gradient = ctx.createLinearGradient(f.x, f.y, f.x, f.y + 40);
+  gradient.addColorStop(0, "#555");
+  gradient.addColorStop(1, "#222");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(f.x, f.y, 40, 40);
+
+  ctx.fillStyle = "#333";
+  ctx.fillRect(f.x + 5, f.y - 10, 30, 10);
+
+  ctx.strokeStyle = "#FFD700";
+  ctx.beginPath();
+  ctx.arc(f.x + 20, f.y, 10, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawSmoke(ctx: CanvasRenderingContext2D, smokes: Smoke[]) {
+  ctx.fillStyle = "rgba(200,200,200,0.5)";
+  smokes.forEach((s) => {
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(s.x + i * 10, s.y - i * 5, 20, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+function drawUI(ctx: CanvasRenderingContext2D, state: GameState) {
+  ctx.fillStyle = "white";
+  ctx.font = "24px Arial";
+  ctx.fillText(`Score: ${state.score}`, 20, 40);
+  ctx.fillText(`Time: ${Math.ceil(state.timeLeft / 1000)}s`, 650, 40);
+}
+
+function drawGameOver(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+  ctx.font = "bold 48px Arial";
+  ctx.fillStyle = "#FF0000";
+  ctx.shadowColor = "#000";
+  ctx.shadowBlur = 10;
+  ctx.fillText("GAME OVER", canvas.width / 2 - 150, 60);
+  ctx.shadowBlur = 0;
+}
+
+// --- Main Component ---
 export default function ChickenEscape2D() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameLoopRef = useRef<number>();
   const keysRef = useRef<{ [key: string]: boolean }>({});
+  const gameStartTime = useRef<number>(0);
 
   const [gameState, setGameState] = useState<GameState>({
     score: 0,
@@ -40,6 +131,7 @@ export default function ChickenEscape2D() {
     y: 300,
     dy: 0,
     isGrounded: true,
+    isDucking: false,
   });
 
   const [fryer, setFryer] = useState<FryerState>({
@@ -48,44 +140,10 @@ export default function ChickenEscape2D() {
     speed: 6,
   });
 
-  const gameStartTime = useRef<number>(0);
+  const [smokes, setSmokes] = useState<Smoke[]>([
+    { x: 500, y: 260, width: 60, height: 40 },
+  ]);
 
-  // --- Draw functions ---
-  const drawChicken = useCallback(
-    (ctx: CanvasRenderingContext2D, chickenState: ChickenState) => {
-      const { x, y } = chickenState;
-      ctx.fillStyle = "#FFD700";
-      ctx.fillRect(x, y, 40, 40);
-    },
-    []
-  );
-
-  const drawFryer = useCallback(
-    (ctx: CanvasRenderingContext2D, fryerState: FryerState) => {
-      const { x, y } = fryerState;
-      ctx.fillStyle = "#8B0000";
-      ctx.fillRect(x, y, 40, 40);
-    },
-    []
-  );
-
-  const drawUI = useCallback(
-    (ctx: CanvasRenderingContext2D, state: GameState) => {
-      ctx.fillStyle = "white";
-      ctx.strokeStyle = "black";
-      ctx.lineWidth = 2;
-      ctx.font = "24px Arial";
-      const scoreText = `Score: ${state.score}`;
-      ctx.strokeText(scoreText, 20, 40);
-      ctx.fillText(scoreText, 20, 40);
-      const timeText = `Time: ${Math.ceil(state.timeLeft / 1000)}s`;
-      ctx.strokeText(timeText, 650, 40);
-      ctx.fillText(timeText, 650, 40);
-    },
-    []
-  );
-
-  // --- Game update ---
   const updateGame = useCallback(() => {
     if (gameState.phase !== "playing") return;
     const canvas = canvasRef.current;
@@ -98,14 +156,15 @@ export default function ChickenEscape2D() {
       return;
     }
 
-    // --- Update Chicken ---
-    setChicken((prevChicken) => {
-      const newChicken = { ...prevChicken };
+    setChicken((prev) => {
       const gravity = 0.6;
       const jumpForce = -12;
       const groundY = 300;
+      const newChicken = { ...prev };
 
-      if (keysRef.current["Space"] && newChicken.isGrounded) {
+      newChicken.isDucking = keysRef.current["ArrowDown"] || false;
+
+      if (keysRef.current["Space"] && newChicken.isGrounded && !newChicken.isDucking) {
         newChicken.dy = jumpForce;
         newChicken.isGrounded = false;
         jumpSound.currentTime = 0;
@@ -131,9 +190,8 @@ export default function ChickenEscape2D() {
       return newChicken;
     });
 
-    // --- Update Fryer ---
-    setFryer((prevFryer) => {
-      const newFryer = { ...prevFryer };
+    setFryer((prev) => {
+      const newFryer = { ...prev };
       newFryer.x -= newFryer.speed;
       if (newFryer.x + 40 < 0) {
         newFryer.x = canvas.width;
@@ -143,115 +201,139 @@ export default function ChickenEscape2D() {
       return newFryer;
     });
 
-    setGameState((prev) => ({ ...prev, timeLeft: newTimeLeft }));
+    setChicken((c) => {
+      for (const smoke of smokes) {
+        const height = c.isDucking ? 20 : 40;
+        if (
+          c.x < smoke.x + smoke.width &&
+          c.x + 40 > smoke.x &&
+          c.y < smoke.y + smoke.height &&
+          c.y + height > smoke.y
+        ) {
+          hitSound.currentTime = 0;
+          hitSound.play();
+          setGameState((prev) => ({ ...prev, phase: "gameOver" }));
+        }
+      }
 
-    // --- Collision ---
-    setChicken((chicken) => {
       if (
-        chicken.x < fryer.x + 40 &&
-        chicken.x + 40 > fryer.x &&
-        chicken.y < fryer.y + 40 &&
-        chicken.y + 40 > fryer.y
+        c.x < fryer.x + 40 &&
+        c.x + 40 > fryer.x &&
+        c.y < fryer.y + 40 &&
+        c.y + (c.isDucking ? 20 : 40) > fryer.y
       ) {
         hitSound.currentTime = 0;
         hitSound.play();
         setGameState((prev) => ({ ...prev, phase: "gameOver" }));
       }
-      return chicken;
-    });
-  }, [gameState.phase, fryer.x, fryer.y]);
 
-  // --- Render ---
+      return c;
+    });
+
+    setGameState((prev) => ({ ...prev, timeLeft: newTimeLeft }));
+  }, [gameState.phase, fryer.x, fryer.y, smokes]);
+
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#87CEEB";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#90EE90";
-    ctx.fillRect(0, 340, canvas.width, 60);
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (gameState.phase === "playing") {
-      drawChicken(ctx, chicken);
-      drawFryer(ctx, fryer);
-      drawUI(ctx, gameState);
+    // Draw background
+    drawBackground(ctx, canvas);
+
+    // Draw smoke
+    drawSmoke(ctx, smokes);
+
+    // Draw fryer
+    drawFryer(ctx, fryer);
+
+    // Draw chicken
+    drawChicken(ctx, chicken);
+
+    // Draw UI
+    drawUI(ctx, gameState);
+
+    // Draw game over if needed
+    if (gameState.phase === "gameOver") {
+      drawGameOver(ctx, canvas);
     }
-  }, [chicken, fryer, drawChicken, drawFryer, drawUI, gameState]);
-
-  // --- Game Loop ---
-  useEffect(() => {
-    let loopId: number;
-
-    const loop = () => {
-      updateGame();
-      render();
-      if (gameState.phase === "playing") {
-        loopId = requestAnimationFrame(loop);
+    if (gameState.phase === "gameWon") {
+      ctx.font = "bold 48px Arial";
+      ctx.fillStyle = "#00FF00";
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 10;
+      ctx.fillText("YOU ESCAPED!", canvas.width / 2 - 180, 60);
+      ctx.shadowBlur = 0;
+    }
+    }, [chicken, fryer, smokes, gameState]);
+  
+    // Add your useEffect hooks and return statement here
+    // Example:
+    useEffect(() => {
+      let animationFrameId: number;
+      function gameLoop() {
+        updateGame();
+        render();
+        animationFrameId = requestAnimationFrame(gameLoop);
       }
-    };
-
-    if (gameState.phase === "playing") loopId = requestAnimationFrame(loop);
-
-    return () => cancelAnimationFrame(loopId);
-  }, [gameState.phase, updateGame, render]);
-
-  // --- Key listeners ---
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      keysRef.current[e.code] = true;
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keysRef.current[e.code] = false;
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-
-  // --- Click to Start ---
-  const handleStart = () => {
-    if (gameState.phase === "ready") {
-      setGameState((prev) => ({ ...prev, phase: "playing" }));
-      gameStartTime.current = Date.now();
-    }
-  };
-
-  return (
-    <div style={{ textAlign: "center" }}>
-      {gameState.phase === "ready" && (
-        <button
-          onClick={handleStart}
+      if (gameState.phase === "playing") {
+        gameLoop();
+      }
+      return () => cancelAnimationFrame(animationFrameId);
+    }, [gameState.phase, updateGame, render]);
+  
+    // Keyboard event listeners
+    useEffect(() => {
+      function handleKeyDown(e: KeyboardEvent) {
+        keysRef.current[e.code] = true;
+        if (gameState.phase === "ready" && e.code === "Space") {
+          setGameState((prev) => ({ ...prev, phase: "playing" }));
+          gameStartTime.current = Date.now();
+        }
+      }
+      function handleKeyUp(e: KeyboardEvent) {
+        keysRef.current[e.code] = false;
+      }
+      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keyup", handleKeyUp);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        window.removeEventListener("keyup", handleKeyUp);
+      };
+    }, [gameState.phase]);
+  
+    return (
+      <div style={{ textAlign: "center" }}>
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={400}
           style={{
-            padding: "12px 24px",
-            fontSize: "20px",
-            marginTop: "100px",
-            cursor: "pointer",
+            border: "4px solid #333",
+            background: "#eee",
+            marginTop: 20,
           }}
-        >
-          Start Game
-        </button>
-      )}
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={400}
-        style={{
-          display: "block",
-          margin: "20px auto",
-          border: "2px solid black",
-        }}
-      />
-      {(gameState.phase === "gameOver" || gameState.phase === "gameWon") && (
-        <div style={{ fontSize: "24px", color: "#FF0000", marginTop: "20px" }}>
-          {gameState.phase === "gameOver" ? "Game Over!" : "You Win!"} Score:{" "}
-          {gameState.score}
-        </div>
-      )}
-    </div>
-  );
-}
+          tabIndex={0}
+        />
+        {gameState.phase === "ready" && (
+          <div style={{ marginTop: 20, fontSize: 24 }}>
+            Press <b>Space</b> to start!
+          </div>
+        )}
+        {gameState.phase === "gameOver" && (
+          <div style={{ marginTop: 20, fontSize: 24, color: "#FF0000" }}>
+            Game Over! Press <b>Space</b> to restart.
+          </div>
+        )}
+        {gameState.phase === "gameWon" && (
+          <div style={{ marginTop: 20, fontSize: 24, color: "#00FF00" }}>
+            You Escaped! Press <b>Space</b> to play again.
+          </div>
+        )}
+      </div>
+    );
+  }

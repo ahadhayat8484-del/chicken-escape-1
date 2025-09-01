@@ -143,7 +143,8 @@ export function useGameLogic(gameMode: "solo" | "team") {
     }, 16);
 
     return () => clearInterval(interval);
-  }, [gameState.phase, gameMode, fryer.position, playHitSound, playJumpSound]);
+    // depend on fryer.position[0] (primitive value) to avoid array identity churn
+  }, [gameState.phase, gameMode, fryer.position[0], playHitSound, playJumpSound]);
 
   return {
     gameState,
