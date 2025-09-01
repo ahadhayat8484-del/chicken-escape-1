@@ -33,7 +33,10 @@ const jumpSound = new Audio("/sounds/jump.mp3");
 const hitSound = new Audio("/sounds/hit.mp3");
 
 // --- Drawing Functions ---
-function drawBackground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+function drawBackground(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+) {
   const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
   sky.addColorStop(0, "#87CEEB");
   sky.addColorStop(1, "#B0E0E6");
@@ -105,7 +108,10 @@ function drawUI(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.fillText(`Time: ${Math.ceil(state.timeLeft / 1000)}s`, 650, 40);
 }
 
-function drawGameOver(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+function drawGameOver(
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+) {
   ctx.font = "bold 48px Arial";
   ctx.fillStyle = "#FF0000";
   ctx.shadowColor = "#000";
@@ -164,7 +170,11 @@ export default function ChickenEscape2D() {
 
       newChicken.isDucking = keysRef.current["ArrowDown"] || false;
 
-      if (keysRef.current["Space"] && newChicken.isGrounded && !newChicken.isDucking) {
+      if (
+        keysRef.current["Space"] &&
+        newChicken.isGrounded &&
+        !newChicken.isDucking
+      ) {
         newChicken.dy = jumpForce;
         newChicken.isGrounded = false;
         jumpSound.currentTime = 0;
@@ -269,71 +279,71 @@ export default function ChickenEscape2D() {
       ctx.fillText("YOU ESCAPED!", canvas.width / 2 - 180, 60);
       ctx.shadowBlur = 0;
     }
-    }, [chicken, fryer, smokes, gameState]);
-  
-    // Add your useEffect hooks and return statement here
-    // Example:
-    useEffect(() => {
-      let animationFrameId: number;
-      function gameLoop() {
-        updateGame();
-        render();
-        animationFrameId = requestAnimationFrame(gameLoop);
+  }, [chicken, fryer, smokes, gameState]);
+
+  // Add your useEffect hooks and return statement here
+  // Example:
+  useEffect(() => {
+    let animationFrameId: number;
+    function gameLoop() {
+      updateGame();
+      render();
+      animationFrameId = requestAnimationFrame(gameLoop);
+    }
+    if (gameState.phase === "playing") {
+      gameLoop();
+    }
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [gameState.phase, updateGame, render]);
+
+  // Keyboard event listeners
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      keysRef.current[e.code] = true;
+      if (gameState.phase === "ready" && e.code === "Space") {
+        setGameState((prev) => ({ ...prev, phase: "playing" }));
+        gameStartTime.current = Date.now();
       }
-      if (gameState.phase === "playing") {
-        gameLoop();
-      }
-      return () => cancelAnimationFrame(animationFrameId);
-    }, [gameState.phase, updateGame, render]);
-  
-    // Keyboard event listeners
-    useEffect(() => {
-      function handleKeyDown(e: KeyboardEvent) {
-        keysRef.current[e.code] = true;
-        if (gameState.phase === "ready" && e.code === "Space") {
-          setGameState((prev) => ({ ...prev, phase: "playing" }));
-          gameStartTime.current = Date.now();
-        }
-      }
-      function handleKeyUp(e: KeyboardEvent) {
-        keysRef.current[e.code] = false;
-      }
-      window.addEventListener("keydown", handleKeyDown);
-      window.addEventListener("keyup", handleKeyUp);
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        window.removeEventListener("keyup", handleKeyUp);
-      };
-    }, [gameState.phase]);
-  
-    return (
-      <div style={{ textAlign: "center" }}>
-        <canvas
-          ref={canvasRef}
-          width={800}
-          height={400}
-          style={{
-            border: "4px solid #333",
-            background: "#eee",
-            marginTop: 20,
-          }}
-          tabIndex={0}
-        />
-        {gameState.phase === "ready" && (
-          <div style={{ marginTop: 20, fontSize: 24 }}>
-            Press <b>Space</b> to start!
-          </div>
-        )}
-        {gameState.phase === "gameOver" && (
-          <div style={{ marginTop: 20, fontSize: 24, color: "#FF0000" }}>
-            Game Over! Press <b>Space</b> to restart.
-          </div>
-        )}
-        {gameState.phase === "gameWon" && (
-          <div style={{ marginTop: 20, fontSize: 24, color: "#00FF00" }}>
-            You Escaped! Press <b>Space</b> to play again.
-          </div>
-        )}
-      </div>
-    );
-  }
+    }
+    function handleKeyUp(e: KeyboardEvent) {
+      keysRef.current[e.code] = false;
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [gameState.phase]);
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <canvas
+        ref={canvasRef}
+        width={800}
+        height={400}
+        style={{
+          border: "4px solid #333",
+          background: "#eee",
+          marginTop: 20,
+        }}
+        tabIndex={0}
+      />
+      {gameState.phase === "ready" && (
+        <div style={{ marginTop: 20, fontSize: 24 }}>
+          Press <b>Space</b> to start!
+        </div>
+      )}
+      {gameState.phase === "gameOver" && (
+        <div style={{ marginTop: 20, fontSize: 24, color: "#FF0000" }}>
+          Game Over! Press <b>Space</b> to restart.
+        </div>
+      )}
+      {gameState.phase === "gameWon" && (
+        <div style={{ marginTop: 20, fontSize: 24, color: "#00FF00" }}>
+          You Escaped! Press <b>Space</b> to play again.
+        </div>
+      )}
+    </div>
+  );
+}

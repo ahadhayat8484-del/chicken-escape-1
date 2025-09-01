@@ -25,7 +25,7 @@ export default function Chicken({
   try {
     fbx = useFBX("/minecraft-chicken/source/chicken.fbx") as THREE.Group;
     texture = useTexture(
-      "/minecraft-chicken/textures/chicken.png"
+      "/minecraft-chicken/textures/chicken.png",
     ) as THREE.Texture;
   } catch (err) {
     console.warn("Could not load chicken FBX or texture:", err);
@@ -46,10 +46,10 @@ export default function Chicken({
       mixerRef.current = new THREE.AnimationMixer(fbx);
 
       const runAction = fbxWithAnimations.animations.find((anim: any) =>
-        /run|walk|idle/i.test(anim.name)
+        /run|walk|idle/i.test(anim.name),
       );
       const action = mixerRef.current.clipAction(
-        runAction || fbxWithAnimations.animations[0]
+        runAction || fbxWithAnimations.animations[0],
       );
       action.play();
     }

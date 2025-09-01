@@ -22,7 +22,7 @@ function Fryer({
 }) {
   // Use fryer.fbx model
   const fryerFbx: any = useFBX("/fryer.fbx");
-  
+
   useEffect(() => {
     if (!fryerFbx) return;
     fryerFbx.traverse((child: any) => {
@@ -55,7 +55,7 @@ function Fryer({
 
 function FireObstacle({ position }: { position: [number, number, number] }) {
   const fireFbx: any = useFBX("/fire.fbx");
-  
+
   useEffect(() => {
     if (!fireFbx) return;
     fireFbx.traverse((child: any) => {
@@ -87,7 +87,7 @@ function FireObstacle({ position }: { position: [number, number, number] }) {
 
 function OilObstacle({ position }: { position: [number, number, number] }) {
   const oilFbx: any = useFBX("/oil.fbx");
-  
+
   useEffect(() => {
     if (!oilFbx) return;
     oilFbx.traverse((child: any) => {
@@ -126,13 +126,13 @@ function Gun({
 }) {
   const gunModel: any = useFBX("/glock-17-gen-5/Glock-17gen5.fbx");
   const diffuse: any = useTexture(
-    "/glock-17-gen-5/textures/Glock_SP_Set_001_Diffuse.jpeg"
+    "/glock-17-gen-5/textures/Glock_SP_Set_001_Diffuse.jpeg",
   );
   const normal: any = useTexture(
-    "/glock-17-gen-5/textures/Glock_SP_Set_001_Normal.jpeg"
+    "/glock-17-gen-5/textures/Glock_SP_Set_001_Normal.jpeg",
   );
   const roughness: any = useTexture(
-    "/glock-17-gen-5/textures/Glock_SP_Set_001_Glossiness.jpeg"
+    "/glock-17-gen-5/textures/Glock_SP_Set_001_Glossiness.jpeg",
   );
 
   useEffect(() => {
@@ -250,7 +250,7 @@ interface Projectile {
 
 interface Obstacle {
   position: [number, number, number];
-  type: 'fire' | 'oil';
+  type: "fire" | "oil";
   id: number;
 }
 
@@ -266,7 +266,9 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   // Player chicken model - positioned at the bottom
   const playerFbx: any = useFBX("/minecraft-chicken/source/Chicken.fbx");
-  const playerTexture: any = useTexture("/minecraft-chicken/textures/chicken.png");
+  const playerTexture: any = useTexture(
+    "/minecraft-chicken/textures/chicken.png",
+  );
 
   useEffect(() => {
     if (!playerFbx || !playerTexture) return;
@@ -317,16 +319,16 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
     for (let i = 1; i <= 12; i++) {
       const laneIndex = Math.floor(Math.random() * 3);
       const z = 10 + i * 6 + Math.random() * 4; // Positive Z (in front)
-      const type = Math.random() < 0.5 ? 'fire' : 'oil';
+      const type = Math.random() < 0.5 ? "fire" : "oil";
       generated.push({
         position: [lanes[laneIndex], 0, z],
         type,
-        id: obstacleIdCounter + i
+        id: obstacleIdCounter + i,
       });
     }
     setObstacles(generated);
     setChasingFryer([0, 1, -20]); // Behind the chicken
-    setObstacleIdCounter(prev => prev + 12);
+    setObstacleIdCounter((prev) => prev + 12);
   }, [mode]);
 
   const resetGame = useCallback(() => {
@@ -345,17 +347,17 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
       for (let i = 1; i <= 12; i++) {
         const laneIndex = Math.floor(Math.random() * 3);
         const z = 10 + i * 6 + Math.random() * 4;
-        const type = Math.random() < 0.5 ? 'fire' : 'oil';
+        const type = Math.random() < 0.5 ? "fire" : "oil";
         generated.push({
           position: [lanes[laneIndex], 0, z],
           type,
-          id: obstacleIdCounter + i
+          id: obstacleIdCounter + i,
         });
       }
       setObstacles(generated);
       setChasingFryer([0, 1, -20]);
       setGameSpeed(5);
-      setObstacleIdCounter(prev => prev + 12);
+      setObstacleIdCounter((prev) => prev + 12);
     }
   }, [mode, obstacleIdCounter]);
 
@@ -382,7 +384,11 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
           return [
             ...prev,
             {
-              position: [lanes[lane], 0.6, playerPos[2] + 0.5] as [number, number, number],
+              position: [lanes[lane], 0.6, playerPos[2] + 0.5] as [
+                number,
+                number,
+                number,
+              ],
               fromPlayer: true,
               id,
             },
@@ -435,7 +441,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
       const jumpDuration = 0.6;
       const height = Math.max(
         0,
-        2.5 * (4 * (elapsed / jumpDuration) * (1 - elapsed / jumpDuration))
+        2.5 * (4 * (elapsed / jumpDuration) * (1 - elapsed / jumpDuration)),
       );
       setPlayerPos((p) => [p[0], height, p[2]]);
       if (elapsed > jumpDuration) {
@@ -447,18 +453,23 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
     if (mode === "solo") {
       // Move obstacles towards the chicken (negative Z direction)
-      setObstacles((prev) =>
-        prev
-          .map((ob) => ({
-            ...ob,
-            position: [ob.position[0], ob.position[1], ob.position[2] - gameSpeed * delta] as [number, number, number]
-          }))
-          .filter((ob) => ob.position[2] > playerPos[2] - 5) // Remove obstacles that passed the chicken
+      setObstacles(
+        (prev) =>
+          prev
+            .map((ob) => ({
+              ...ob,
+              position: [
+                ob.position[0],
+                ob.position[1],
+                ob.position[2] - gameSpeed * delta,
+              ] as [number, number, number],
+            }))
+            .filter((ob) => ob.position[2] > playerPos[2] - 5), // Remove obstacles that passed the chicken
       );
 
       // Move fryer towards the chicken from behind
       setChasingFryer((prev) => {
-        const z = prev[2] + (gameSpeed * 0.8) * delta; // Slightly slower than obstacles
+        const z = prev[2] + gameSpeed * 0.8 * delta; // Slightly slower than obstacles
         return [prev[0], prev[1], Math.min(z, playerPos[2] - 2)]; // Don't let fryer get too close instantly
       });
 
@@ -487,20 +498,20 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
       // Spawn new obstacles as old ones are removed
       if (obstacles.length < 8) {
-        const maxZ = Math.max(...obstacles.map(o => o.position[2]), 10);
+        const maxZ = Math.max(...obstacles.map((o) => o.position[2]), 10);
         const newObstacles: Obstacle[] = [];
         for (let i = 0; i < 3; i++) {
           const laneIndex = Math.floor(Math.random() * 3);
           const z = maxZ + 8 + i * 6 + Math.random() * 4;
-          const type = Math.random() < 0.5 ? 'fire' : 'oil';
+          const type = Math.random() < 0.5 ? "fire" : "oil";
           newObstacles.push({
             position: [lanes[laneIndex], 0, z],
             type,
-            id: obstacleIdCounter + i
+            id: obstacleIdCounter + i,
           });
         }
-        setObstacles(prev => [...prev, ...newObstacles]);
-        setObstacleIdCounter(prev => prev + 3);
+        setObstacles((prev) => [...prev, ...newObstacles]);
+        setObstacleIdCounter((prev) => prev + 3);
       }
     }
 
@@ -516,7 +527,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
             fromPlayer: p.fromPlayer,
             id: p.id,
           }))
-          .filter((p) => p.position[2] < 100)
+          .filter((p) => p.position[2] < 100),
       );
 
       setAiProjectiles((prev) =>
@@ -529,7 +540,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
             ] as [number, number, number],
             id: p.id,
           }))
-          .filter((p) => p.position[2] > -20)
+          .filter((p) => p.position[2] > -20),
       );
 
       if (Date.now() - lastAiShot > 1000 + Math.random() * 1500) {
@@ -573,7 +584,7 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   const renderObstacles = () =>
     obstacles.map((ob) => {
-      if (ob.type === 'fire') {
+      if (ob.type === "fire") {
         return <FireObstacle key={`fire-${ob.id}`} position={ob.position} />;
       } else {
         return <OilObstacle key={`oil-${ob.id}`} position={ob.position} />;
@@ -590,7 +601,10 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
 
   const renderAiProjectiles = () =>
     aiProjectiles.map((p) => (
-      <mesh key={`ai-${p.id}`} position={p.position as [number, number, number]}>
+      <mesh
+        key={`ai-${p.id}`}
+        position={p.position as [number, number, number]}
+      >
         <sphereGeometry args={[0.1, 8, 8]} />
         <meshStandardMaterial color="#ff4444" />
       </mesh>
@@ -600,7 +614,12 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
     <>
       <ambientLight intensity={0.6} />
       <directionalLight intensity={0.8} position={[5, 10, 5]} castShadow />
-      <spotLight intensity={0.5} position={[0, 10, 0]} angle={0.3} penumbra={1} />
+      <spotLight
+        intensity={0.5}
+        position={[0, 10, 0]}
+        angle={0.3}
+        penumbra={1}
+      />
 
       <group ref={groupRef}>
         <Ground />
@@ -616,7 +635,9 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
             </mesh>
           )}
 
-          {mode === "team" && <Gun position={[0.5, 0.5, 0]} rotation={[0, Math.PI / 2, 0]} />}
+          {mode === "team" && (
+            <Gun position={[0.5, 0.5, 0]} rotation={[0, Math.PI / 2, 0]} />
+          )}
         </group>
 
         {mode === "solo" && renderObstacles()}
@@ -637,72 +658,86 @@ export default function ChickenEscape3D({ gameMode }: ChickenEscape3DProps) {
         {mode === "team" && !gameOver && !gameWon && <Crosshair />}
 
         {/* UI positioned at the top of the screen */}
-        <div style={{ 
-          position: "absolute", 
-          top: 20, 
-          left: "50%", 
-          transform: "translateX(-50%)",
-          color: "white", 
-          fontSize: 24,
-          fontWeight: "bold",
-          textAlign: "center",
-          textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
-        }}>
-          {mode === "solo" ? `Speed: ${gameSpeed.toFixed(1)}` : `Boss Health: ${bossHealth}`}
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "white",
+            fontSize: 24,
+            fontWeight: "bold",
+            textAlign: "center",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+          }}
+        >
+          {mode === "solo"
+            ? `Speed: ${gameSpeed.toFixed(1)}`
+            : `Boss Health: ${bossHealth}`}
         </div>
 
         {/* Game Over message at the top */}
         {gameOver && (
-          <div style={{ 
-            position: "absolute", 
-            top: 80, 
-            left: "50%", 
-            transform: "translateX(-50%)", 
-            color: "#ff4444",
-            fontSize: 36,
-            fontWeight: "bold",
-            textAlign: "center",
-            background: "rgba(0,0,0,0.8)",
-            padding: "20px",
-            borderRadius: "10px",
-            textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
-          }}>
-            Game Over<br/>
-            <div style={{fontSize: 18, marginTop: 10}}>Press R to restart</div>
+          <div
+            style={{
+              position: "absolute",
+              top: 80,
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "#ff4444",
+              fontSize: 36,
+              fontWeight: "bold",
+              textAlign: "center",
+              background: "rgba(0,0,0,0.8)",
+              padding: "20px",
+              borderRadius: "10px",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+            }}
+          >
+            Game Over
+            <br />
+            <div style={{ fontSize: 18, marginTop: 10 }}>
+              Press R to restart
+            </div>
           </div>
         )}
 
         {gameWon && (
-          <div style={{ 
-            position: "absolute", 
-            top: 80, 
-            left: "50%", 
-            transform: "translateX(-50%)", 
-            color: "lime",
-            fontSize: 36,
-            fontWeight: "bold",
-            textAlign: "center",
-            background: "rgba(0,0,0,0.8)",
-            padding: "20px",
-            borderRadius: "10px",
-            textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
-          }}>
+          <div
+            style={{
+              position: "absolute",
+              top: 80,
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "lime",
+              fontSize: 36,
+              fontWeight: "bold",
+              textAlign: "center",
+              background: "rgba(0,0,0,0.8)",
+              padding: "20px",
+              borderRadius: "10px",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+            }}
+          >
             You Win!
           </div>
         )}
 
         {/* Instructions at the bottom */}
-        <div style={{
-          position: "absolute",
-          bottom: 20,
-          left: "50%",
-          transform: "translateX(-50%)",
-          color: "white",
-          fontSize: 16,
-          textAlign: "center",
-          textShadow: "2px 2px 4px rgba(0,0,0,0.8)"
-        }}>
-          Use SPACE, CLICK, or ARROW KEYS to jump and dodge obstacles!<br/>
+        <div
+          style={{
+            position: "absolute",
+            bottom: 20,
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "white",
+            fontSize: 16,
+            textAlign: "center",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+          }}
+        >
+          Use SPACE, CLICK, or ARROW KEYS to jump and dodge obstacles!
+          <br />
           Don't let the fryer catch you!
         </div>
       </Html>
